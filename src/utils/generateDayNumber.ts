@@ -1,3 +1,5 @@
+import { TOTAL_POKEMON } from '@/constants/pokemon'
+
 /**
  * Gera um número pseudoaleatório baseado em uma semente numérica.
  * Implementação do algoritmo Linear Congruential Generator (LCG).
@@ -19,7 +21,8 @@ function createRandomGenerator(seed: any) {
 }
 
 /**
- * Retorna um número inteiro determinístico entre 1 e 1350 baseado no dia atual.
+ * Retorna um número inteiro determinístico entre 1 e TOTAL_POKEMON (1025),
+ * baseado no dia atual — garante que o Pokémon do dia sempre exista na PokeAPI.
  * @returns {number} Número gerado
  */
 export function getDailyRandomNumber() {
@@ -35,7 +38,8 @@ export function getDailyRandomNumber() {
   // Inicializa o gerador com a semente do dia
   const random = createRandomGenerator(seed)
 
-  // Mapeia o float de 0-1 para o intervalo desejado [1, 1350]
-  // Correção aplicada: Math.floor(random() * (max - min + 1)) + min
-  return Math.floor(random() * 1350) + 1
+  // Mapeia o float de 0-1 para o intervalo válido [1, TOTAL_POKEMON].
+  // Antes usava 1350 (hardcoded) — IDs 1026..1350 não existem na PokeAPI,
+  // o fetch dava 404 e o card do Pokémon do dia sumia (~24% dos dias).
+  return Math.floor(random() * TOTAL_POKEMON) + 1
 }

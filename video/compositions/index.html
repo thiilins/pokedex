@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    /* ── Local fonts ─────────────────────────────────────────────── */
+    @font-face {
+      font-family: 'Outfit';
+      font-style: normal;
+      font-weight: 400;
+      font-display: block;
+      src: url('../assets/fonts/Outfit-400.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Outfit';
+      font-style: normal;
+      font-weight: 700;
+      font-display: block;
+      src: url('../assets/fonts/Outfit-700.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Outfit';
+      font-style: normal;
+      font-weight: 900;
+      font-display: block;
+      src: url('../assets/fonts/Outfit-900.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Roboto Mono';
+      font-style: normal;
+      font-weight: 400;
+      font-display: block;
+      src: url('../assets/fonts/RobotoMono-400.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'Roboto Mono';
+      font-style: normal;
+      font-weight: 700;
+      font-display: block;
+      src: url('../assets/fonts/RobotoMono-700.woff2') format('woff2');
+    }
+
+    /* ── Reset & canvas ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #040714;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* ── Scene containers ───────────────────────────────────────────── */
+    .scene {
+      position: absolute;
+      top: 0; left: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #040714;
+    }
+    #s1 { z-index: 1; opacity: 1; }
+    #s2 { z-index: 2; opacity: 0; }
+    #s3 { z-index: 3; opacity: 0; }
+    #s4 { z-index: 4; opacity: 0; }
+    #s5 { z-index: 5; opacity: 0; }
+    #s6 { z-index: 6; opacity: 0; }
+
+    /* ── HUD grid background ────────────────────────────────────────── */
+    .hud-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 240, 255, 0.04) 1px, rgba(0,0,0,0) 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, rgba(0,0,0,0) 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* ── Scanlines overlay ──────────────────────────────────────────── */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0px,
+        rgba(0, 0, 0, 0) 3px,
+        rgba(0, 0, 0, 0.12) 3px,
+        rgba(0, 0, 0, 0.12) 4px
+      );
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* ── Corner brackets (L-shape) ──────────────────────────────────── */
+    .corner-brackets {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .corner-brackets::before,
+    .corner-brackets::after,
+    .corner-brackets .br,
+    .corner-brackets .bl {
+      content: '';
+      position: absolute;
+      width: 48px;
+      height: 48px;
+    }
+    .corner-brackets::before {
+      top: 28px; left: 28px;
+      border-top: 3px solid #00f0ff;
+      border-left: 3px solid #00f0ff;
+    }
+    .corner-brackets::after {
+      top: 28px; right: 28px;
+      border-top: 3px solid #00f0ff;
+      border-right: 3px solid #00f0ff;
+    }
+    .corner-brackets .br {
+      bottom: 28px; right: 28px;
+      border-bottom: 3px solid #00f0ff;
+      border-right: 3px solid #00f0ff;
+    }
+    .corner-brackets .bl {
+      bottom: 28px; left: 28px;
+      border-bottom: 3px solid #00f0ff;
+      border-left: 3px solid #00f0ff;
+    }
+
+    /* ── Glow radial pulses ─────────────────────────────────────────── */
+    .bg-glow-cyan {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(0,240,255,0.18) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+    }
+    .bg-glow-purple {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(157,78,221,0.16) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+    }
+    .bg-glow-pink {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(255,44,85,0.18) 0%, rgba(0,0,0,0) 70%);
+      pointer-events: none;
+    }
+
+    /* ── Typography ─────────────────────────────────────────────────── */
+    .mono { font-family: 'Roboto Mono', monospace; }
+    .display { font-family: 'Outfit', sans-serif; }
+
+    /* ── Lower-third label strip ─────────────────────────────────────── */
+    .lower-third {
+      position: absolute;
+      bottom: 80px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .lower-third-inner {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #00f0ff;
+      text-transform: uppercase;
+      background: rgba(4, 7, 20, 0.85);
+      border: 1px solid rgba(0,240,255,0.4);
+      padding: 12px 36px;
+      text-shadow: 0 0 20px rgba(0,240,255,0.8);
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       S1 — INTRO "tela ligando"
+    ════════════════════════════════════════════════════════════════ */
+
+    #s1-pokeball-wrap {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+    }
+    #s1-pokeball {
+      width: 180px;
+      height: 180px;
+    }
+    .pb-circle { fill: none; stroke: #00f0ff; stroke-width: 4; }
+    .pb-line    { fill: none; stroke: #00f0ff; stroke-width: 3; }
+    .pb-center  { fill: none; stroke: #00f0ff; stroke-width: 3; }
+
+    #s1-hero-wrap {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1640px;
+      height: 960px;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 0 80px rgba(0,240,255,0.25), 0 0 200px rgba(0,240,255,0.10);
+    }
+    #s1-hero-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    /* Indicator pills */
+    .s1-indicators {
+      position: absolute;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 24px;
+    }
+    .s1-indicator {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #040714;
+      background: #00f0ff;
+      padding: 10px 24px;
+      border-radius: 4px;
+      text-shadow: none;
+      box-shadow: 0 0 24px rgba(0,240,255,0.9);
+      white-space: nowrap;
+    }
+    .s1-indicator.active {
+      background: rgba(0,240,255,0.12);
+      color: #00f0ff;
+      border: 2px solid #00f0ff;
+    }
+
+    /* Hero screen-on overlay */
+    #s1-flash {
+      position: absolute;
+      inset: 0;
+      background: #00f0ff;
+      pointer-events: none;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       S2 — CATÁLOGO
+    ════════════════════════════════════════════════════════════════ */
+
+    #s2-panel-wrap {
+      position: absolute;
+      top: 60px;
+      left: 200px;
+      width: 1060px;
+      height: 960px;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 2px solid rgba(0,240,255,0.3);
+      box-shadow: 0 0 60px rgba(0,240,255,0.18);
+    }
+    #s2-panel-inner {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+    }
+    #s2-panel-inner img {
+      width: 100%;
+      display: block;
+    }
+
+    /* Right info panel */
+    #s2-info-panel {
+      position: absolute;
+      top: 60px;
+      right: 80px;
+      width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+
+    .s2-counter {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 88px;
+      font-weight: 700;
+      color: #00f0ff;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 40px rgba(0,240,255,0.7);
+      line-height: 1;
+    }
+    .s2-counter-label {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 20px;
+      font-weight: 400;
+      color: rgba(0,240,255,0.6);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: -12px;
+    }
+
+    .s2-copy-block {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .s2-copy-line {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      color: #ffffff;
+      text-transform: uppercase;
+      padding: 12px 20px;
+      border-left: 3px solid #00f0ff;
+      background: rgba(0,240,255,0.06);
+    }
+
+    /* Type chips */
+    .s2-chips {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .type-chip {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      padding: 8px 20px;
+      border-radius: 4px;
+      color: #fff;
+      text-transform: uppercase;
+    }
+    .chip-fire    { background: #ff5a00; box-shadow: 0 0 20px rgba(255,90,0,0.6); }
+    .chip-grass   { background: #10b981; box-shadow: 0 0 20px rgba(16,185,129,0.6); }
+    .chip-flying  { background: #3C92FF; box-shadow: 0 0 20px rgba(60,146,255,0.6); }
+    .chip-water   { background: #00b0ff; box-shadow: 0 0 20px rgba(0,176,255,0.6); }
+
+    /* ════════════════════════════════════════════════════════════════
+       S3 — FICHA
+    ════════════════════════════════════════════════════════════════ */
+
+    #s3-ficha-wrap {
+      position: absolute;
+      top: 60px;
+      right: 80px;
+      width: 1000px;
+      height: 960px;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 2px solid rgba(0,240,255,0.3);
+      box-shadow: 0 0 60px rgba(0,240,255,0.18);
+    }
+    #s3-ficha-inner {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+    }
+    #s3-ficha-inner img {
+      width: 100%;
+      display: block;
+    }
+
+    /* Left detail panel */
+    #s3-detail-panel {
+      position: absolute;
+      top: 60px;
+      left: 80px;
+      width: 740px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    .s3-title-block { display: flex; flex-direction: column; gap: 8px; }
+    .s3-pokemon-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 88px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      text-shadow: 0 0 40px rgba(0,240,255,0.4);
+    }
+    .s3-pokemon-id {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      color: #00f0ff;
+      letter-spacing: 0.1em;
+    }
+    .s3-chips-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    /* Sprite float */
+    #s3-sprite-wrap {
+      position: absolute;
+      bottom: 120px;
+      left: 80px;
+      width: 320px;
+      height: 320px;
+    }
+    #s3-sprite {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 30px rgba(255,90,0,0.7)) drop-shadow(0 0 60px rgba(255,90,0,0.4));
+    }
+
+    /* Stats */
+    .s3-stats-section { display: flex; flex-direction: column; gap: 12px; }
+    .s3-stat-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .s3-stat-name {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: rgba(0,240,255,0.7);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      width: 60px;
+      flex-shrink: 0;
+    }
+    .s3-stat-bar-bg {
+      flex: 1;
+      height: 10px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .s3-stat-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #00f0ff, #9d4edd);
+      box-shadow: 0 0 12px rgba(0,240,255,0.7);
+      width: 0%;
+    }
+    .s3-stat-val {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      width: 44px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Evolution chain */
+    .s3-evo-section { display: flex; align-items: center; gap: 20px; }
+    .s3-evo-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .s3-evo-sprite {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 12px rgba(0,240,255,0.5));
+    }
+    .s3-evo-name {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .s3-evo-arrow {
+      width: 36px;
+      height: 3px;
+      background: #00f0ff;
+      box-shadow: 0 0 10px rgba(0,240,255,0.8);
+      flex-shrink: 0;
+    }
+
+    /* Shiny strip */
+    .s3-sprites-strip {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+    .s3-sprite-thumb {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+    }
+    .s3-shiny-badge {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffea00;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border: 1px solid #ffea00;
+      box-shadow: 0 0 10px rgba(255,234,0,0.5);
+    }
+
+    /* Section copy labels */
+    .s3-section-label {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #00f0ff;
+      text-transform: uppercase;
+      border-bottom: 2px solid rgba(0,240,255,0.3);
+      padding-bottom: 8px;
+      margin-bottom: 4px;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       S4 — ARENA
+    ════════════════════════════════════════════════════════════════ */
+
+    #s4-panel-wrap {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1600px;
+      height: 960px;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 2px solid rgba(255,44,85,0.4);
+      box-shadow: 0 0 80px rgba(255,44,85,0.2);
+    }
+    #s4-panel-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+
+    /* VS overlay */
+    #s4-vs-wrap {
+      position: absolute;
+      top: 50%; left: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      pointer-events: none;
+    }
+    #s4-vs-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 160px;
+      font-weight: 900;
+      color: #ff2c55;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      text-shadow:
+        0 0 30px rgba(255,44,85,1),
+        0 0 80px rgba(255,44,85,0.6),
+        0 0 160px rgba(255,44,85,0.3);
+    }
+
+    /* Arena top label */
+    #s4-title {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.20em;
+      color: #00f0ff;
+      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(0,240,255,0.8);
+      white-space: nowrap;
+    }
+
+    /* Mode flash screens */
+    #s4-mode-overlay {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+    #s4-screen-rpg,
+    #s4-screen-sim {
+      position: absolute;
+      inset: 0;
+    }
+    #s4-screen-rpg img,
+    #s4-screen-sim img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    /* Modes copy */
+    .s4-copy {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #fff;
+      text-transform: uppercase;
+      background: rgba(4,7,20,0.80);
+      padding: 12px 36px;
+      border: 1px solid rgba(0,240,255,0.35);
+      white-space: nowrap;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       S5 — DESTAQUES
+    ════════════════════════════════════════════════════════════════ */
+
+    #s5-registro-wrap {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1200px;
+      height: 800px;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 2px solid rgba(0,240,255,0.3);
+      box-shadow: 0 0 60px rgba(0,240,255,0.2);
+    }
+    #s5-registro-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    /* Cards fan-out */
+    #s5-cards-stage {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 800px;
+      height: 640px;
+    }
+    .s5-card {
+      position: absolute;
+      top: 0; left: 50%;
+      width: 240px;
+      height: 330px;
+      object-fit: cover;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 30px rgba(0,240,255,0.2);
+    }
+
+    /* Sound wave beats */
+    #s5-sound-stage {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .s5-wave-icon {
+      font-size: 80px;
+      color: #9d4edd;
+      text-shadow: 0 0 30px rgba(157,78,221,0.8);
+    }
+    .s5-wave-bars {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .s5-bar {
+      width: 12px;
+      border-radius: 6px;
+      background: linear-gradient(to top, #00f0ff, #9d4edd);
+      box-shadow: 0 0 14px rgba(0,240,255,0.7);
+    }
+    /* Fixed heights for determinism — no Math.random() */
+    .s5-bar:nth-child(1) { height: 40px; }
+    .s5-bar:nth-child(2) { height: 80px; }
+    .s5-bar:nth-child(3) { height: 120px; }
+    .s5-bar:nth-child(4) { height: 60px; }
+    .s5-bar:nth-child(5) { height: 140px; }
+    .s5-bar:nth-child(6) { height: 90px; }
+    .s5-bar:nth-child(7) { height: 50px; }
+    .s5-bar:nth-child(8) { height: 110px; }
+
+    /* Section copy */
+    .s5-copy {
+      position: absolute;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #00f0ff;
+      text-transform: uppercase;
+      background: rgba(4,7,20,0.85);
+      padding: 12px 36px;
+      border: 1px solid rgba(0,240,255,0.4);
+      white-space: nowrap;
+      text-shadow: 0 0 16px rgba(0,240,255,0.7);
+    }
+
+    /* Download icon */
+    #s5-download-icon {
+      position: absolute;
+      top: 100px;
+      right: 200px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #9d4edd;
+      text-shadow: 0 0 20px rgba(157,78,221,0.8);
+      text-transform: uppercase;
+      background: rgba(157,78,221,0.12);
+      border: 2px solid rgba(157,78,221,0.5);
+      padding: 14px 28px;
+    }
+
+    /* ════════════════════════════════════════════════════════════════
+       S6 — OUTRO
+    ════════════════════════════════════════════════════════════════ */
+
+    /* Tech stamps */
+    #s6-stamps {
+      position: absolute;
+      top: 50%;
+      left: 160px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .s6-stamp {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #fff;
+      text-transform: uppercase;
+    }
+    .s6-check {
+      font-size: 30px;
+      color: #00f0ff;
+      text-shadow: 0 0 16px rgba(0,240,255,0.9);
+    }
+
+    /* CTA block */
+    #s6-cta-block {
+      position: absolute;
+      top: 50%;
+      right: 160px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 20px;
+      text-align: right;
+    }
+
+    #s6-logo-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 100px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(90deg, #00f0ff, #ff2c55);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      line-height: 1;
+      filter: drop-shadow(0 0 30px rgba(0,240,255,0.5));
+    }
+
+    #s6-url {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 42px;
+      font-weight: 700;
+      color: #00f0ff;
+      letter-spacing: 0.04em;
+      text-shadow: 0 0 30px rgba(0,240,255,0.9), 0 0 60px rgba(0,240,255,0.4);
+    }
+
+    #s6-author {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 28px;
+      font-weight: 400;
+      color: rgba(0,240,255,0.7);
+      letter-spacing: 0.12em;
+    }
+
+    #s6-portfolio {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 20px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* Divider line */
+    #s6-divider {
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(0,240,255,0) 0%, #00f0ff 30%, #9d4edd 70%, rgba(157,78,221,0) 100%);
+      box-shadow: 0 0 16px rgba(0,240,255,0.5);
+    }
+
+    /* Final fade overlay */
+    #s6-fade-out {
+      position: absolute;
+      inset: 0;
+      background: #040714;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    ROOT COMPOSITION — pokedex-showcase
+    Duration: 45s @ 30fps = 1350 frames
+    Scenes: S1 (0-4s) | S2 (4-12.5s) | S3 (12.5-22.5s) | S4 (22.5-31s) | S5 (31-38s) | S6 (38-45s)
+  -->
+  <div
+    id="root"
+    data-composition-id="pokedex-showcase"
+    data-width="1920"
+    data-height="1080"
+    data-start="0"
+    data-duration="45"
+  >
+
+    <!-- ──────────────────────────────────────────────────────────────
+         S1 — INTRO "tela ligando" (0 – 4.0s)
+    ────────────────────────────────────────────────────────────────── -->
+    <div id="s1" class="scene">
+      <div class="hud-grid"></div>
+      <div class="scanlines"></div>
+
+      <!-- Background glow -->
+      <div class="bg-glow-cyan" style="width:900px;height:900px;top:-200px;left:-200px;" id="s1-glow1"></div>
+      <div class="bg-glow-purple" style="width:700px;height:700px;bottom:-200px;right:-100px;" id="s1-glow2"></div>
+
+      <!-- Pokeball SVG boot animation -->
+      <div id="s1-pokeball-wrap">
+        <svg id="s1-pokeball" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer circle -->
+          <circle class="pb-circle" id="pb-outer" cx="50" cy="50" r="44"
+            stroke-dasharray="276.46" stroke-dashoffset="276.46" />
+          <!-- Center line horizontal -->
+          <line class="pb-line" id="pb-line" x1="6" y1="50" x2="94" y2="50"
+            stroke-dasharray="88" stroke-dashoffset="88" />
+          <!-- Center circle -->
+          <circle class="pb-center" id="pb-inner" cx="50" cy="50" r="12"
+            stroke-dasharray="75.4" stroke-dashoffset="75.4" />
+        </svg>
+      </div>
+
+      <!-- Hero screenshot (screen powering on) -->
+      <div id="s1-hero-wrap">
+        <img src="assets/screenshots/00-hero.png" alt="Pokédex hero" crossorigin="anonymous" />
+      </div>
+
+      <!-- Indicator pills (acendem em stagger) -->
+      <div class="s1-indicators">
+        <div class="s1-indicator" id="s1-ind1">1025 ESPÉCIES</div>
+        <div class="s1-indicator" id="s1-ind2">18 ELEMENTOS</div>
+        <div class="s1-indicator" id="s1-ind3">GEN 9</div>
+        <div class="s1-indicator active" id="s1-ind4">ATIVO ●</div>
+      </div>
+
+      <!-- System label -->
+      <div class="lower-third" style="bottom:26px;">
+        <div class="lower-third-inner" id="s1-label">[ CENTRAL DE INTELIGÊNCIA · 1025 POKÉMON ]</div>
+      </div>
+
+      <!-- Scene-transition flash -->
+      <div id="s1-flash"></div>
+
+      <!-- Corner brackets -->
+      <div class="corner-brackets" id="s1-corners"><span class="br"></span><span class="bl"></span></div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────────────────────
+         S2 — CATÁLOGO "tem todos" (4.0 – 12.5s)
+    ────────────────────────────────────────────────────────────────── -->
+    <div id="s2" class="scene">
+      <div class="hud-grid"></div>
+      <div class="scanlines"></div>
+
+      <!-- Background glows -->
+      <div class="bg-glow-cyan" style="width:600px;height:600px;top:100px;right:100px;opacity:0.6;" id="s2-glow1"></div>
+      <div class="bg-glow-purple" style="width:800px;height:800px;bottom:-300px;left:-100px;" id="s2-glow2"></div>
+
+      <!-- Grid screenshot panel (tall image, scrolls via y) -->
+      <div id="s2-panel-wrap">
+        <div id="s2-panel-inner">
+          <img src="assets/screenshots/01-grid.png" alt="Grid de Pokémon" crossorigin="anonymous" />
+        </div>
+      </div>
+
+      <!-- Right info panel -->
+      <div id="s2-info-panel">
+        <!-- Counter -->
+        <div>
+          <div class="s2-counter mono" id="s2-counter-num">0001</div>
+          <div class="s2-counter-label">POKÉMON</div>
+        </div>
+
+        <!-- Copy lines — shown in sequence -->
+        <div class="s2-copy-block">
+          <div class="s2-copy-line" id="s2-copy1">TODOS OS 1025. DE TODAS AS GERAÇÕES.</div>
+          <div class="s2-copy-line" id="s2-copy2">ACHA QUALQUER UM EM 1 SEGUNDO</div>
+          <div class="s2-copy-line" id="s2-copy3">FILTRA POR TIPO, NOME OU NÚMERO</div>
+        </div>
+
+        <!-- Type chips -->
+        <div class="s2-chips" id="s2-chips-group">
+          <div class="type-chip chip-fire" id="chip-fire">🔥 FIRE</div>
+          <div class="type-chip chip-grass" id="chip-grass">🌿 GRASS</div>
+          <div class="type-chip chip-flying" id="chip-flying">💨 FLYING</div>
+          <div class="type-chip chip-water" id="chip-water">💧 WATER</div>
+        </div>
+      </div>
+
+      <!-- Corner brackets -->
+      <div class="corner-brackets" id="s2-corners"><span class="br"></span><span class="bl"></span></div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────────────────────
+         S3 — FICHA "olha o nível de detalhe" (12.5 – 22.5s)
+    ────────────────────────────────────────────────────────────────── -->
+    <div id="s3" class="scene">
+      <div class="hud-grid"></div>
+      <div class="scanlines"></div>
+
+      <!-- Background glow -->
+      <div class="bg-glow-pink" style="width:700px;height:700px;top:-100px;right:-100px;opacity:0.5;" id="s3-glow1"></div>
+      <div class="bg-glow-cyan" style="width:500px;height:500px;bottom:0;left:50px;" id="s3-glow2"></div>
+
+      <!-- Ficha screenshot panel (tall image, scrolls) -->
+      <div id="s3-ficha-wrap">
+        <div id="s3-ficha-inner">
+          <img src="assets/screenshots/03-ficha.png" alt="Ficha do Charizard" crossorigin="anonymous" />
+        </div>
+      </div>
+
+      <!-- Left detail panel -->
+      <div id="s3-detail-panel">
+        <!-- Title -->
+        <div class="s3-title-block" id="s3-title-block">
+          <div class="s3-pokemon-name">CHARIZARD</div>
+          <div class="s3-pokemon-id mono">· #0006 · FICHA COMPLETA</div>
+          <div class="s3-chips-row">
+            <div class="type-chip chip-fire">🔥 FIRE</div>
+            <div class="type-chip chip-flying">💨 FLYING</div>
+          </div>
+        </div>
+
+        <!-- Sprite -->
+        <div id="s3-sprite-wrap">
+          <img id="s3-sprite"
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png"
+            alt="Charizard artwork"
+            crossorigin="anonymous" />
+        </div>
+
+        <!-- Stats section -->
+        <div class="s3-stats-section" id="s3-stats-section">
+          <div class="s3-section-label">STATS, HABILIDADES, FRAQUEZAS</div>
+          <div class="s3-stat-row">
+            <div class="s3-stat-name">HP</div>
+            <div class="s3-stat-bar-bg">
+              <div class="s3-stat-bar-fill" id="bar-hp"></div>
+            </div>
+            <div class="s3-stat-val" id="val-hp">0</div>
+          </div>
+          <div class="s3-stat-row">
+            <div class="s3-stat-name">ATK</div>
+            <div class="s3-stat-bar-bg">
+              <div class="s3-stat-bar-fill" id="bar-atk"></div>
+            </div>
+            <div class="s3-stat-val" id="val-atk">0</div>
+          </div>
+          <div class="s3-stat-row">
+            <div class="s3-stat-name">DEF</div>
+            <div class="s3-stat-bar-bg">
+              <div class="s3-stat-bar-fill" id="bar-def"></div>
+            </div>
+            <div class="s3-stat-val" id="val-def">0</div>
+          </div>
+          <div class="s3-stat-row">
+            <div class="s3-stat-name">SPD</div>
+            <div class="s3-stat-bar-bg">
+              <div class="s3-stat-bar-fill" id="bar-spd"></div>
+            </div>
+            <div class="s3-stat-val" id="val-spd">0</div>
+          </div>
+        </div>
+
+        <!-- Evolution chain -->
+        <div class="s3-evo-section" id="s3-evo-section">
+          <div class="s3-section-label" style="margin-bottom:0">EVOLUÇÕES E FORMAS</div>
+        </div>
+        <div class="s3-evo-section" id="s3-evo-chain">
+          <div class="s3-evo-item" id="evo1">
+            <img class="s3-evo-sprite"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/4.png"
+              alt="Charmander" crossorigin="anonymous" />
+            <span class="s3-evo-name">CHARMANDER</span>
+          </div>
+          <div class="s3-evo-arrow" id="evo-a1"></div>
+          <div class="s3-evo-item" id="evo2">
+            <img class="s3-evo-sprite"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/5.png"
+              alt="Charmeleon" crossorigin="anonymous" />
+            <span class="s3-evo-name">CHARMELEON</span>
+          </div>
+          <div class="s3-evo-arrow" id="evo-a2"></div>
+          <div class="s3-evo-item" id="evo3">
+            <img class="s3-evo-sprite"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png"
+              alt="Charizard" crossorigin="anonymous" />
+            <span class="s3-evo-name">CHARIZARD</span>
+          </div>
+        </div>
+
+        <!-- Shiny strip -->
+        <div id="s3-shiny-section">
+          <div class="s3-section-label">ATÉ OS SPRITES RETRÔ E SHINY</div>
+          <div class="s3-sprites-strip" id="s3-shiny-strip">
+            <img class="s3-sprite-thumb"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-i/red-blue/6.png"
+              alt="Sprite retrô" crossorigin="anonymous" />
+            <img class="s3-sprite-thumb"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-ii/crystal/6.png"
+              alt="Sprite crystal" crossorigin="anonymous" />
+            <img class="s3-sprite-thumb"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png"
+              alt="Sprite atual" crossorigin="anonymous" />
+            <img class="s3-sprite-thumb"
+              src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/6.png"
+              alt="Sprite shiny" crossorigin="anonymous"
+              id="s3-shiny-img" />
+            <div class="s3-shiny-badge" id="s3-shiny-badge">✨ SHINY</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corner brackets -->
+      <div class="corner-brackets" id="s3-corners"><span class="br"></span><span class="bl"></span></div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────────────────────
+         S4 — ARENA "bota dois pra brigar" (22.5 – 31.0s)
+    ────────────────────────────────────────────────────────────────── -->
+    <div id="s4" class="scene">
+      <div class="hud-grid"></div>
+      <div class="scanlines"></div>
+
+      <!-- BG glow pink/fire -->
+      <div class="bg-glow-pink" style="width:800px;height:800px;top:50%;left:50%;transform:translate(-50%,-50%);" id="s4-glow"></div>
+
+      <!-- Arena screenshot panel (main confronto) -->
+      <div id="s4-panel-wrap">
+        <img id="s4-img-main" src="assets/screenshots/04-arena-confronto.png" alt="Arena confronto" crossorigin="anonymous" />
+
+        <!-- Mode overlays (RPG + Sim flash on top) -->
+        <div id="s4-mode-overlay">
+          <div id="s4-screen-rpg" style="opacity:0;">
+            <img src="assets/screenshots/04b-arena-rpg.png" alt="Arena RPG" crossorigin="anonymous" />
+          </div>
+          <div id="s4-screen-sim" style="opacity:0;">
+            <img src="assets/screenshots/04c-arena-simulacao.png" alt="Arena simulação" crossorigin="anonymous" />
+          </div>
+        </div>
+      </div>
+
+      <!-- VS text overlay (beat 1) -->
+      <div id="s4-vs-wrap">
+        <div id="s4-vs-text">VS</div>
+      </div>
+
+      <!-- Arena title -->
+      <div id="s4-title">[ ARENA DE DUELO ]</div>
+
+      <!-- Copy labels (switching) -->
+      <div class="s4-copy" id="s4-copy1">COMPARA DOIS LADO A LADO</div>
+      <div class="s4-copy" id="s4-copy2" style="opacity:0;">3 MODOS: ATRIBUTOS · RPG · SIMULAÇÃO</div>
+
+      <!-- Corner brackets -->
+      <div class="corner-brackets" id="s4-corners"><span class="br"></span><span class="bl"></span></div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────────────────────
+         S5 — DESTAQUES "ainda tem mais" (31.0 – 38.0s)
+    ────────────────────────────────────────────────────────────────── -->
+    <div id="s5" class="scene">
+      <div class="hud-grid"></div>
+      <div class="scanlines"></div>
+
+      <!-- BG glows -->
+      <div class="bg-glow-purple" style="width:700px;height:700px;top:-100px;left:-100px;" id="s5-glow1"></div>
+      <div class="bg-glow-cyan" style="width:600px;height:600px;bottom:-100px;right:-100px;" id="s5-glow2"></div>
+
+      <!-- Beat 1: Registro rápido -->
+      <div id="s5-registro-wrap">
+        <img src="assets/screenshots/05-registro-rapido.png" alt="Registro rápido" crossorigin="anonymous" />
+      </div>
+      <div class="s5-copy" id="s5-copy1">[ PREVIEW RÁPIDO SEM SAIR DA LISTA ]</div>
+
+      <!-- Beat 2: Fan-out de cards (renderizados escondidos inicialmente) -->
+      <div id="s5-cards-stage" style="opacity:0;">
+        <img class="s5-card" id="s5-card1" src="assets/cards/card-1-tcg.png" alt="Card TCG" crossorigin="anonymous" />
+        <img class="s5-card" id="s5-card2" src="assets/cards/card-2-vetor.png" alt="Card Vetor" crossorigin="anonymous" />
+        <img class="s5-card" id="s5-card3" src="assets/cards/card-3-retro-games.png" alt="Card Retrô" crossorigin="anonymous" />
+        <img class="s5-card" id="s5-card4" src="assets/cards/card-4-gameboy.png" alt="Card Game Boy" crossorigin="anonymous" />
+      </div>
+      <div class="s5-copy" id="s5-copy2" style="opacity:0;">[ EXPORTA O CARD EM 4 ESTILOS · PNG ]</div>
+      <div id="s5-download-icon" style="opacity:0;">⬇ PNG</div>
+
+      <!-- Beat 3: Sound waves -->
+      <div id="s5-sound-stage" style="opacity:0;">
+        <div class="s5-wave-icon">🔊</div>
+        <div class="s5-wave-bars">
+          <div class="s5-bar"></div>
+          <div class="s5-bar"></div>
+          <div class="s5-bar"></div>
+          <div class="s5-bar"></div>
+          <div class="s5-bar"></div>
+          <div class="s5-bar"></div>
+          <div class="s5-bar"></div>
+          <div class="s5-bar"></div>
+        </div>
+      </div>
+      <div class="s5-copy" id="s5-copy3" style="opacity:0;">[ E TOCA O CRY DE CADA UM 🔊 ]</div>
+
+      <!-- Corner brackets -->
+      <div class="corner-brackets" id="s5-corners"><span class="br"></span><span class="bl"></span></div>
+    </div>
+
+    <!-- ──────────────────────────────────────────────────────────────
+         S6 — OUTRO "feito por mim" + CTA (38.0 – 45.0s)
+    ────────────────────────────────────────────────────────────────── -->
+    <div id="s6" class="scene">
+      <div class="hud-grid"></div>
+      <div class="scanlines"></div>
+
+      <!-- BG glows -->
+      <div class="bg-glow-cyan" style="width:800px;height:800px;top:50%;left:30%;transform:translate(-50%,-50%);opacity:0.5;" id="s6-glow1"></div>
+      <div class="bg-glow-purple" style="width:600px;height:600px;top:50%;right:100px;transform:translateY(-50%);" id="s6-glow2"></div>
+
+      <!-- Tech stamps (left) -->
+      <div id="s6-stamps">
+        <div class="s6-stamp" id="s6-stamp1">
+          <span class="s6-check">✓</span>
+          <span>NEXT.JS 16 · CACHE COMPONENTS</span>
+        </div>
+        <div class="s6-stamp" id="s6-stamp2">
+          <span class="s6-check">✓</span>
+          <span>PARTIAL PRERENDERING (PPR)</span>
+        </div>
+        <div class="s6-stamp" id="s6-stamp3">
+          <span class="s6-check">✓</span>
+          <span>1025 POKÉMON CACHEADOS</span>
+        </div>
+      </div>
+
+      <!-- CTA block (right) -->
+      <div id="s6-cta-block">
+        <div id="s6-logo-text">POKÉDEX</div>
+        <div id="s6-divider"></div>
+        <div id="s6-url">pokedex.thiagolins.dev.br</div>
+        <div id="s6-author" class="mono">por @thiilins</div>
+        <div id="s6-portfolio" class="mono">CONFERE NO PORTFÓLIO → thiilins.tech</div>
+      </div>
+
+      <!-- Corner brackets (close in animation) -->
+      <div class="corner-brackets" id="s6-corners"><span class="br"></span><span class="bl"></span></div>
+
+      <!-- Final fade to dark -->
+      <div id="s6-fade-out" style="opacity:0;"></div>
+    </div>
+
+  </div><!-- /#root -->
+
+  <script>
+    window.__timelines = window.__timelines || {};
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Charizard stats (fixed values — deterministic)
+    // ─────────────────────────────────────────────────────────────────────
+    var STATS = {
+      hp:  { val: 78,  pct: 51.3 },
+      atk: { val: 84,  pct: 55.3 },
+      def: { val: 78,  pct: 51.3 },
+      spd: { val: 100, pct: 65.8 }
+    };
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Counter tick utility — deterministic (no Date/random)
+    // ─────────────────────────────────────────────────────────────────────
+    function counterProxy(el, from, to, label) {
+      var obj = { n: from };
+      var proxy = gsap.to(obj, {
+        n: to,
+        duration: 1,
+        ease: 'none',
+        onUpdate: function() {
+          el.textContent = String(Math.round(obj.n)).padStart(4, '0');
+        }
+      });
+      proxy.kill();  // We re-add to timeline — this is just building
+      return obj;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Master Timeline
+    // ─────────────────────────────────────────────────────────────────────
+    var tl = gsap.timeline({ paused: true });
+
+    // ═══════════════════════════════════════════════════
+    // S1 — INTRO (0 – 4.0s)
+    // ═══════════════════════════════════════════════════
+
+    // Pokeball draws in (0.1 – 1.2s)
+    tl.fromTo('#pb-outer',
+      { strokeDashoffset: 276.46 },
+      { strokeDashoffset: 0, duration: 0.9, ease: 'power2.out' },
+      0.1);
+    tl.fromTo('#pb-line',
+      { strokeDashoffset: 88 },
+      { strokeDashoffset: 0, duration: 0.5, ease: 'power3.out' },
+      0.5);
+    tl.fromTo('#pb-inner',
+      { strokeDashoffset: 75.4 },
+      { strokeDashoffset: 0, duration: 0.4, ease: 'power2.out' },
+      0.8);
+
+    // Background glow pulse during boot
+    tl.fromTo('#s1-glow1',
+      { scale: 0.7, opacity: 0 },
+      { scale: 1.1, opacity: 1, duration: 1.0, ease: 'power2.out' },
+      0.1);
+
+    // Pokeball scales out (power on)
+    tl.to('#s1-pokeball-wrap',
+      { scale: 1.6, opacity: 0, duration: 0.35, ease: 'power3.in' },
+      1.1);
+
+    // Hero screen "powers on" — fade+scale like display turning on
+    tl.fromTo('#s1-hero-wrap',
+      { opacity: 0, scale: 0.96 },
+      { opacity: 1, scale: 1, duration: 0.7, ease: 'power3.out' },
+      1.1);
+
+    // Corner brackets fade in
+    tl.fromTo('#s1-corners',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: 'power2.out' },
+      1.3);
+
+    // Indicators stagger in (1.4 – 2.8s)
+    tl.fromTo(['#s1-ind1','#s1-ind2','#s1-ind3','#s1-ind4'],
+      { y: 14, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: 'expo.out', stagger: 0.18 },
+      1.4);
+
+    // Label at bottom
+    tl.fromTo('#s1-label',
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' },
+      2.0);
+
+    // Glow on hero (pulsing brightness — in tl, deterministic)
+    tl.fromTo('#s1-hero-wrap',
+      { filter: 'brightness(1.0)' },
+      { filter: 'brightness(1.12)', duration: 0.6, ease: 'sine.inOut', yoyo: true, repeat: 2 },
+      2.2);
+
+    // Scene-exit flash cyan → transition to S2
+    // Flash in at 3.65s → peaks at 3.80s (0.15s)
+    tl.fromTo('#s1-flash',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.15, ease: 'power4.in' },
+      3.65);
+    // S2 appears behind flash (after flash peaks)
+    tl.fromTo('#s2',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.01 },
+      3.82);
+    // Flash clears — S2 revealed (starts AFTER flash peaks, no overlap)
+    tl.fromTo('#s1-flash',
+      { opacity: 1 },
+      { opacity: 0, duration: 0.18, ease: 'power2.out', overwrite: true },
+      3.82);
+    // Hard-kill S1 (scene finished)
+    tl.set('#s1', { opacity: 0 }, 4.05);
+
+
+    // ═══════════════════════════════════════════════════
+    // S2 — CATÁLOGO (4.0 – 12.5s)
+    // ═══════════════════════════════════════════════════
+
+    var T2 = 4.0;
+
+    // Panel slides in with perspective tilt
+    tl.fromTo('#s2-panel-wrap',
+      { x: -80, opacity: 0, rotationY: 8 },
+      { x: 0, opacity: 1, rotationY: 0, duration: 0.7, ease: 'power3.out',
+        transformPerspective: 1200 },
+      T2 + 0.2);
+
+    // Info panel (counter) comes in from right
+    tl.fromTo('#s2-info-panel',
+      { x: 60, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.6, ease: 'expo.out' },
+      T2 + 0.3);
+
+    // Corner brackets
+    tl.fromTo('#s2-corners',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: 'power2.out' },
+      T2 + 0.4);
+
+    // Grid scroll (01-grid.png is 2718px tall, panel is 960px) — scroll down
+    // Image natural height at 1060px wide ≈ 1680px
+    // We move y from 0 to -720px over 3s
+    tl.fromTo('#s2-panel-inner',
+      { y: 0 },
+      { y: -720, duration: 3.0, ease: 'power1.inOut' },
+      T2 + 0.5);
+
+    // Counter counts 0001 → 1025 (4.5 – 7.0s = 2.5s)
+    var counterObj = { n: 1 };
+    tl.fromTo(counterObj,
+      { n: 1 },
+      {
+        n: 1025,
+        duration: 2.5,
+        ease: 'power1.inOut',
+        onUpdate: function() {
+          var el = document.getElementById('s2-counter-num');
+          if (el) el.textContent = String(Math.round(counterObj.n)).padStart(4, '0');
+        }
+      },
+      T2 + 0.5);
+
+    // Copy line 1 (comes in with panel)
+    tl.fromTo('#s2-copy1',
+      { x: -30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+      T2 + 0.6);
+
+    // Beat 2 — search typewriter effect (7–10s)
+    // Copy line 2 replaces 1 region
+    tl.fromTo('#s2-copy2',
+      { x: -30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: 'power3.out' },
+      T2 + 3.2);
+
+    // Busca screenshot overlay (fade in over grid panel)
+    tl.fromTo('#s2-panel-wrap',
+      { filter: 'brightness(1)' },
+      { filter: 'brightness(1.1)', duration: 0.3, ease: 'power2.out' },
+      T2 + 3.0);
+
+    // Beat 3 — type chips (10.0 – 12.5s = T2 + 6.0)
+    tl.fromTo('#s2-copy3',
+      { y: 10, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
+      T2 + 6.0);
+
+    tl.fromTo('#s2-chips-group',
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: 'back.out(1.5)' },
+      T2 + 6.2);
+
+    // Chips scale in stagger
+    tl.fromTo(['#chip-fire','#chip-grass','#chip-flying','#chip-water'],
+      { scale: 0.7, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.1 },
+      T2 + 6.4);
+
+    // Fire chip glow pulse (highlighted)
+    tl.to('#chip-fire',
+      { scale: 1.12, duration: 0.3, ease: 'sine.inOut', yoyo: true, repeat: 3 },
+      T2 + 7.0);
+
+    // Transition S2 → S3: blur crossfade
+    var T_23 = 12.2;
+    tl.to('#s2',
+      { filter: 'blur(8px)', scale: 1.02, opacity: 0, duration: 0.4, ease: 'power2.inOut' },
+      T_23);
+    tl.fromTo('#s3',
+      { filter: 'blur(8px)', scale: 0.98, opacity: 0 },
+      { filter: 'blur(0px)', scale: 1, opacity: 1, duration: 0.4, ease: 'power2.inOut' },
+      T_23 + 0.1);
+    tl.set('#s2', { opacity: 0 }, T_23 + 0.5);
+
+
+    // ═══════════════════════════════════════════════════
+    // S3 — FICHA (12.5 – 22.5s)
+    // ═══════════════════════════════════════════════════
+
+    var T3 = 12.5;
+
+    // Ficha panel enters from right (push)
+    tl.fromTo('#s3-ficha-wrap',
+      { x: 80, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.65, ease: 'power3.out' },
+      T3 + 0.2);
+
+    // Ficha scroll down (03-ficha.png is 3087px tall, panel 960px)
+    // Over 8s, pan to bottom region then slow down
+    tl.fromTo('#s3-ficha-inner',
+      { y: 0 },
+      { y: -1200, duration: 7.5, ease: 'power1.inOut' },
+      T3 + 0.3);
+
+    // Beat 1 — title block and sprite
+    tl.fromTo('#s3-title-block',
+      { x: -40, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.6, ease: 'expo.out' },
+      T3 + 0.3);
+
+    tl.fromTo('#s3-sprite-wrap',
+      { scale: 0.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.7, ease: 'back.out(1.4)' },
+      T3 + 0.6);
+
+    // Sprite float (Ken Burns — on parent to avoid conflict)
+    tl.to('#s3-sprite-wrap',
+      { y: -16, duration: 1.8, ease: 'sine.inOut', yoyo: true, repeat: 4 },
+      T3 + 1.0);
+
+    // Corner brackets S3
+    tl.fromTo('#s3-corners',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: 'power2.out' },
+      T3 + 0.5);
+
+    // Beat 2 — stats fill (15.0 – 18.0s = T3 + 2.5 – 5.5)
+    tl.fromTo('#s3-stats-section',
+      { x: -30, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.5, ease: 'power3.out' },
+      T3 + 2.4);
+
+    // Bar fills with value count — each uses a separate proxy object (no DOM overlap)
+    // HP (78)
+    tl.fromTo('#bar-hp',
+      { width: '0%' },
+      { width: '51.3%', duration: 0.7, ease: 'power2.out' },
+      T3 + 2.6);
+    var hpObj = { n: 0 };
+    tl.fromTo(hpObj, { n: 0 }, {
+      n: 78, duration: 0.7, ease: 'power2.out', overwrite: false,
+      onUpdate: function() {
+        var el = document.getElementById('val-hp');
+        if (el) el.textContent = Math.round(hpObj.n);
+      }
+    }, T3 + 2.6);
+
+    // ATK (84) — separate object, no overlap
+    var atkObj = { v: 0 };
+    tl.fromTo('#bar-atk',
+      { width: '0%' },
+      { width: '55.3%', duration: 0.7, ease: 'power2.out' },
+      T3 + 2.85);
+    tl.fromTo(atkObj, { v: 0 }, {
+      v: 84, duration: 0.7, ease: 'power2.out', overwrite: false,
+      onUpdate: function() {
+        var el = document.getElementById('val-atk');
+        if (el) el.textContent = Math.round(atkObj.v);
+      }
+    }, T3 + 2.85);
+
+    // DEF (78) — separate object
+    var defObj = { w: 0 };
+    tl.fromTo('#bar-def',
+      { width: '0%' },
+      { width: '51.3%', duration: 0.7, ease: 'power2.out' },
+      T3 + 3.1);
+    tl.fromTo(defObj, { w: 0 }, {
+      w: 78, duration: 0.7, ease: 'power2.out', overwrite: false,
+      onUpdate: function() {
+        var el = document.getElementById('val-def');
+        if (el) el.textContent = Math.round(defObj.w);
+      }
+    }, T3 + 3.1);
+
+    // SPD (100) — separate object
+    var spdObj = { s: 0 };
+    tl.fromTo('#bar-spd',
+      { width: '0%' },
+      { width: '65.8%', duration: 0.7, ease: 'power2.out' },
+      T3 + 3.35);
+    tl.fromTo(spdObj, { s: 0 }, {
+      s: 100, duration: 0.7, ease: 'power2.out', overwrite: false,
+      onUpdate: function() {
+        var el = document.getElementById('val-spd');
+        if (el) el.textContent = Math.round(spdObj.s);
+      }
+    }, T3 + 3.35);
+
+    // Beat 3 — evolution chain (18.0 – 20.0s = T3 + 5.5 – 7.5)
+    tl.fromTo('#s3-evo-section',
+      { y: 15, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
+      T3 + 5.4);
+
+    tl.fromTo('#evo1',
+      { x: -30, opacity: 0, scale: 0.8 },
+      { x: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.7)' },
+      T3 + 5.6);
+    tl.fromTo('#evo-a1',
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.3, ease: 'power2.out', transformOrigin: 'left center' },
+      T3 + 5.95);
+    tl.fromTo('#evo2',
+      { x: -20, opacity: 0, scale: 0.8 },
+      { x: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.7)' },
+      T3 + 6.15);
+    tl.fromTo('#evo-a2',
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.3, ease: 'power2.out', transformOrigin: 'left center' },
+      T3 + 6.5);
+    tl.fromTo('#evo3',
+      { x: -20, opacity: 0, scale: 0.8 },
+      { x: 0, opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(1.7)' },
+      T3 + 6.7);
+
+    // Beat 4 — shiny strip (20.0 – 22.5s = T3 + 7.5 – 10.0)
+    tl.fromTo('#s3-shiny-section',
+      { y: 15, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+      T3 + 7.4);
+
+    // Shiny sprite flash
+    tl.to('#s3-shiny-img',
+      { filter: 'brightness(2) hue-rotate(30deg)', duration: 0.4, ease: 'power2.out', yoyo: true, repeat: 3 },
+      T3 + 7.8);
+
+    tl.fromTo('#s3-shiny-badge',
+      { scale: 0.7, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.35, ease: 'back.out(2)' },
+      T3 + 8.0);
+
+    // Transition S3 → S4: focus pull
+    var T_34 = 22.2;
+    tl.to('#s3',
+      { filter: 'blur(12px)', opacity: 0, duration: 0.4, ease: 'power2.in' },
+      T_34);
+    tl.fromTo('#s4',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.35, ease: 'power2.out' },
+      T_34 + 0.2);
+    tl.set('#s3', { opacity: 0 }, T_34 + 0.6);
+
+
+    // ═══════════════════════════════════════════════════
+    // S4 — ARENA (22.5 – 31.0s)
+    // ═══════════════════════════════════════════════════
+
+    var T4 = 22.5;
+
+    // Panel slams in (scale from 1.15 → 1, back.out overshoot)
+    tl.fromTo('#s4-panel-wrap',
+      { scale: 1.15, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.4)' },
+      T4 + 0.15);
+
+    // Background glow slam
+    tl.fromTo('#s4-glow',
+      { scale: 0.5, opacity: 0 },
+      { scale: 1.2, opacity: 1, duration: 0.6, ease: 'expo.out' },
+      T4 + 0.15);
+
+    // Corner brackets
+    tl.fromTo('#s4-corners',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.3, ease: 'power2.out' },
+      T4 + 0.3);
+
+    // Arena title drops in
+    tl.fromTo('#s4-title',
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' },
+      T4 + 0.3);
+
+    // Position VS wrap via GSAP (no CSS transform)
+    tl.set('#s4-vs-wrap', { xPercent: -50, yPercent: -50 }, T4 + 0.1);
+
+    // VS text punch in (beat 1: 22.5-25s)
+    tl.fromTo('#s4-vs-text',
+      { scale: 1.8, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: 'expo.out' },
+      T4 + 0.4);
+
+    // VS shake — use xPercent offset to avoid overwriting xPercent:-50
+    tl.to('#s4-vs-wrap',
+      { xPercent: -44, duration: 0.06, ease: 'none', yoyo: true, repeat: 7 },
+      T4 + 0.7);
+
+    // VS glow pulse
+    tl.to('#s4-vs-text',
+      { textShadow: '0 0 60px rgba(255,44,85,1), 0 0 120px rgba(255,44,85,0.8)', duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 3 },
+      T4 + 1.0);
+
+    // Beat 2 — attribute comparison visible (VS fades)
+    tl.to('#s4-vs-wrap',
+      { opacity: 0, scale: 0.85, xPercent: -50, yPercent: -50, duration: 0.3, ease: 'power2.in' },
+      T4 + 2.3);
+    tl.set('#s4-vs-wrap', { visibility: 'hidden' }, T4 + 2.65);
+
+    // Copy 1: "COMPARA DOIS LADO A LADO"
+    tl.fromTo('#s4-copy1',
+      { y: 10, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: 'power3.out' },
+      T4 + 2.4);
+
+    // Beat 3 — 3 mode flashes (28.5 – 31.0s = T4 + 6.0 – 8.5)
+    var T4_b3 = T4 + 6.0;
+
+    // Copy 1 out, copy 2 in
+    tl.to('#s4-copy1',
+      { opacity: 0, duration: 0.2, ease: 'power2.in' },
+      T4_b3);
+    tl.set('#s4-copy1', { visibility: 'hidden' }, T4_b3 + 0.2);
+
+    tl.fromTo('#s4-copy2',
+      { y: 10, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: 'power3.out' },
+      T4_b3 + 0.1);
+
+    // Flash to RPG mode
+    tl.fromTo('#s4-screen-rpg',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.15, ease: 'power4.out' },
+      T4_b3 + 0.3);
+    tl.to('#s4-screen-rpg',
+      { opacity: 0, duration: 0.15, ease: 'power2.in' },
+      T4_b3 + 1.1);
+
+    // Flash to Sim mode
+    tl.fromTo('#s4-screen-sim',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.15, ease: 'power4.out' },
+      T4_b3 + 1.5);
+    tl.to('#s4-screen-sim',
+      { opacity: 0, duration: 0.15, ease: 'power2.in' },
+      T4_b3 + 2.3);
+
+    // Transition S4 → S5: staggered blocks / crossfade
+    var T_45 = 30.7;
+    tl.to('#s4',
+      { opacity: 0, scale: 0.97, duration: 0.35, ease: 'power3.in' },
+      T_45);
+    tl.fromTo('#s5',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.35, ease: 'power2.out' },
+      T_45 + 0.1);
+    tl.set('#s4', { opacity: 0 }, T_45 + 0.5);
+
+
+    // ═══════════════════════════════════════════════════
+    // S5 — DESTAQUES (31.0 – 38.0s)
+    // ═══════════════════════════════════════════════════
+
+    var T5 = 31.0;
+
+    // Background glows
+    tl.fromTo('#s5-glow1',
+      { scale: 0.7, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: 'power2.out' },
+      T5 + 0.1);
+    tl.fromTo('#s5-glow2',
+      { scale: 0.7, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.6, ease: 'power2.out' },
+      T5 + 0.2);
+
+    // Corner brackets
+    tl.fromTo('#s5-corners',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.3, ease: 'power2.out' },
+      T5 + 0.2);
+
+    // Beat 1 — Registro rápido (31.0 – 33.3s)
+    tl.fromTo('#s5-registro-wrap',
+      { scale: 0.88, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: 'back.out(1.5)' },
+      T5 + 0.2);
+
+    tl.fromTo('#s5-copy1',
+      { y: 10, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
+      T5 + 0.5);
+
+    // Beat 1 out (33.0s = T5 + 2.0)
+    tl.to('#s5-registro-wrap',
+      { opacity: 0, scale: 0.95, duration: 0.25, ease: 'power3.in' },
+      T5 + 2.0);
+    tl.set('#s5-registro-wrap', { opacity: 0, visibility: 'hidden' }, T5 + 2.3);
+    tl.to('#s5-copy1',
+      { opacity: 0, duration: 0.2, ease: 'power2.in' },
+      T5 + 2.0);
+    tl.set('#s5-copy1', { visibility: 'hidden' }, T5 + 2.25);
+
+    // Beat 2 — Fan-out cards (33.3 – 35.6s = T5 + 2.3 – 4.6)
+    var T5b2 = T5 + 2.3;
+
+    // Show cards stage — position via GSAP (no CSS transform)
+    tl.set('#s5-cards-stage', { opacity: 1, xPercent: -50, yPercent: -50 }, T5b2);
+
+    // Fan-out: 4 cards rotated into a spread
+    // card positions: left to right, with rotation forming a fan
+    // Each card uses rotation + x to fan out from center
+    tl.fromTo('#s5-card1',
+      { rotation: 0, x: '-50%', y: 0, opacity: 0, scale: 0.7 },
+      { rotation: -24, x: 'calc(-50% - 240px)', y: 40, opacity: 1, scale: 1,
+        duration: 0.45, ease: 'back.out(1.7)' },
+      T5b2 + 0.0);
+    tl.fromTo('#s5-card2',
+      { rotation: 0, x: '-50%', y: 0, opacity: 0, scale: 0.7 },
+      { rotation: -8, x: 'calc(-50% - 80px)', y: 10, opacity: 1, scale: 1,
+        duration: 0.45, ease: 'back.out(1.7)' },
+      T5b2 + 0.12);
+    tl.fromTo('#s5-card3',
+      { rotation: 0, x: '-50%', y: 0, opacity: 0, scale: 0.7 },
+      { rotation: 8, x: 'calc(-50% + 80px)', y: 10, opacity: 1, scale: 1,
+        duration: 0.45, ease: 'back.out(1.7)' },
+      T5b2 + 0.24);
+    tl.fromTo('#s5-card4',
+      { rotation: 0, x: '-50%', y: 0, opacity: 0, scale: 0.7 },
+      { rotation: 24, x: 'calc(-50% + 240px)', y: 40, opacity: 1, scale: 1,
+        duration: 0.45, ease: 'back.out(1.7)' },
+      T5b2 + 0.36);
+
+    // Download icon bounces in
+    tl.fromTo('#s5-download-icon',
+      { y: -20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: 'bounce.out' },
+      T5b2 + 0.5);
+
+    // Download icon pulse
+    tl.to('#s5-download-icon',
+      { y: -6, duration: 0.4, ease: 'sine.inOut', yoyo: true, repeat: 3 },
+      T5b2 + 0.9);
+
+    // Copy 2
+    tl.fromTo('#s5-copy2',
+      { x: -20, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.35, ease: 'power2.out' },
+      T5b2 + 0.4);
+
+    // Beat 2 out (35.4 = T5 + 4.4)
+    tl.to('#s5-cards-stage',
+      { opacity: 0, y: 20, xPercent: -50, yPercent: -50, duration: 0.25, ease: 'power3.in' },
+      T5 + 4.4);
+    tl.set('#s5-cards-stage', { opacity: 0, visibility: 'hidden' }, T5 + 4.7);
+    tl.to('#s5-download-icon',
+      { opacity: 0, duration: 0.2, ease: 'power2.in' },
+      T5 + 4.4);
+    tl.set('#s5-download-icon', { visibility: 'hidden' }, T5 + 4.65);
+    tl.to('#s5-copy2',
+      { opacity: 0, duration: 0.2, ease: 'power2.in' },
+      T5 + 4.4);
+    tl.set('#s5-copy2', { visibility: 'hidden' }, T5 + 4.65);
+
+    // Beat 3 — Sound waves (35.6 – 38.0s = T5 + 4.6 – 7.0)
+    var T5b3 = T5 + 4.6;
+
+    tl.set('#s5-sound-stage', { opacity: 1 }, T5b3);
+    tl.fromTo('#s5-sound-stage',
+      { scale: 0.85, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.6)' },
+      T5b3);
+
+    // Wave bars animate up/down in deterministic loop
+    tl.to('#s5-sound-stage .s5-bar',
+      { scaleY: 1.8, duration: 0.35, ease: 'sine.inOut', yoyo: true, repeat: 5, stagger: 0.06 },
+      T5b3 + 0.3);
+
+    // Copy 3
+    tl.fromTo('#s5-copy3',
+      { scale: 0.9, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.4, ease: 'power3.out' },
+      T5b3 + 0.2);
+
+    // Transition S5 → S6: color dip (slow, wind-down)
+    var T_56 = 37.7;
+    tl.to('#s5',
+      { opacity: 0, duration: 0.4, ease: 'power2.inOut' },
+      T_56);
+    tl.fromTo('#s6',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: 'power2.out' },
+      T_56 + 0.15);
+    tl.set('#s5', { opacity: 0 }, T_56 + 0.6);
+
+
+    // ═══════════════════════════════════════════════════
+    // S6 — OUTRO (38.0 – 45.0s)
+    // ═══════════════════════════════════════════════════
+
+    var T6 = 38.0;
+
+    // BG glows
+    tl.fromTo('#s6-glow1',
+      { scale: 0.6, opacity: 0 },
+      { scale: 1, opacity: 0.5, duration: 0.8, ease: 'power2.out' },
+      T6 + 0.1);
+    tl.fromTo('#s6-glow2',
+      { scale: 0.6, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 0.8, ease: 'power2.out' },
+      T6 + 0.2);
+
+    // Corner brackets
+    tl.fromTo('#s6-corners',
+      { opacity: 0 },
+      { opacity: 1, duration: 0.4, ease: 'power2.out' },
+      T6 + 0.3);
+
+    // Tech stamps slide in (38.0 – 41.0s)
+    tl.fromTo('#s6-stamp1',
+      { x: -40, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: 'expo.out' },
+      T6 + 0.2);
+    tl.fromTo('#s6-stamp2',
+      { x: -40, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: 'expo.out' },
+      T6 + 0.55);
+    tl.fromTo('#s6-stamp3',
+      { x: -40, opacity: 0 },
+      { x: 0, opacity: 1, duration: 0.45, ease: 'expo.out' },
+      T6 + 0.9);
+
+    // CTA block (41.0 – 45.0s = T6 + 3.0)
+    tl.fromTo('#s6-logo-text',
+      { scale: 0.85, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.65, ease: 'back.out(1.3)' },
+      T6 + 2.8);
+
+    tl.fromTo('#s6-divider',
+      { scaleX: 0, opacity: 0 },
+      { scaleX: 1, opacity: 1, duration: 0.5, ease: 'power3.out', transformOrigin: 'left center' },
+      T6 + 3.3);
+
+    tl.fromTo('#s6-url',
+      { y: 15, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+      T6 + 3.7);
+
+    tl.fromTo('#s6-author',
+      { y: 10, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
+      T6 + 4.1);
+
+    tl.fromTo('#s6-portfolio',
+      { y: 10, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.35, ease: 'power2.out' },
+      T6 + 4.4);
+
+    // URL glow pulse (stays for ≥3s)
+    tl.to('#s6-url',
+      { textShadow: '0 0 50px rgba(0,240,255,1), 0 0 100px rgba(0,240,255,0.5)',
+        duration: 0.8, ease: 'sine.inOut', yoyo: true, repeat: 2 },
+      T6 + 4.2);
+
+    // Final fade to black (43.5 – 45.0s)
+    tl.fromTo('#s6-fade-out',
+      { opacity: 0 },
+      { opacity: 1, duration: 1.3, ease: 'power2.inOut' },
+      43.5);
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Register timeline
+    // ─────────────────────────────────────────────────────────────────────
+    window.__timelines['pokedex-showcase'] = tl;
+  </script>
+</body>
+</html>

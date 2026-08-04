@@ -1,0 +1,7 @@
+# Artefatos de render (binários pesados — regeráveis com `npm run render`)
+renders/
+.thumbnails/
+work-*/
+
+# Dependências
+node_modules/

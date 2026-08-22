@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { AlertCircle, ExternalLink, RotateCw, Swords } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Swords, ExternalLink, AlertCircle, RotateCw } from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
 import PokemonTypeIcon, { typeStylingMap } from './PokemonTypeIcon'
 
 interface IProps {
@@ -16,13 +16,36 @@ interface IProps {
 }
 
 // Mapeamento de stat para rótulo curto e cor
-const statConfig: Record<string, { label: string; color: string; bar: string }> = {
-  hp:               { label: 'HP',    color: 'text-red-400',    bar: 'from-red-500 to-red-400' },
-  attack:           { label: 'ATQ',   color: 'text-orange-400', bar: 'from-orange-500 to-orange-400' },
-  defense:          { label: 'DEF',   color: 'text-blue-400',   bar: 'from-blue-500 to-blue-400' },
-  'special-attack': { label: 'ATQ.E', color: 'text-yellow-400', bar: 'from-yellow-500 to-yellow-400' },
-  'special-defense':{ label: 'DEF.E', color: 'text-indigo-400', bar: 'from-indigo-500 to-indigo-400' },
-  speed:            { label: 'VEL',   color: 'text-emerald-400',bar: 'from-emerald-500 to-emerald-400' },
+const statConfig: Record<
+  string,
+  { label: string; color: string; bar: string }
+> = {
+  hp: { label: 'HP', color: 'text-red-400', bar: 'from-red-500 to-red-400' },
+  attack: {
+    label: 'ATQ',
+    color: 'text-orange-400',
+    bar: 'from-orange-500 to-orange-400'
+  },
+  defense: {
+    label: 'DEF',
+    color: 'text-blue-400',
+    bar: 'from-blue-500 to-blue-400'
+  },
+  'special-attack': {
+    label: 'ATQ.E',
+    color: 'text-yellow-400',
+    bar: 'from-yellow-500 to-yellow-400'
+  },
+  'special-defense': {
+    label: 'DEF.E',
+    color: 'text-indigo-400',
+    bar: 'from-indigo-500 to-indigo-400'
+  },
+  speed: {
+    label: 'VEL',
+    color: 'text-emerald-400',
+    bar: 'from-emerald-500 to-emerald-400'
+  }
 }
 
 const PokemonCard: React.FC<IProps> = ({
@@ -103,7 +126,9 @@ const PokemonCard: React.FC<IProps> = ({
         <p className="text-[11px] font-mono text-slate-400 leading-relaxed">
           Falha ao carregar
           <br />
-          <span className="text-white/40">#{String(pokemonId).padStart(4, '0')}</span>
+          <span className="text-white/40">
+            #{String(pokemonId).padStart(4, '0')}
+          </span>
         </p>
         <button
           onClick={() => setRetryCount(c => c + 1)}
@@ -149,7 +174,10 @@ const PokemonCard: React.FC<IProps> = ({
 
   // 3 stats principais para mini-gráfico
   const topStats = data.stats.slice(0, 3)
-  const totalStats = data.stats.reduce((acc: number, s: any) => acc + s.base_stat, 0)
+  const totalStats = data.stats.reduce(
+    (acc: number, s: any) => acc + s.base_stat,
+    0
+  )
 
   return (
     <div
@@ -169,9 +197,8 @@ const PokemonCard: React.FC<IProps> = ({
           : `${style.border} hover:border-white/20`
       }`}
       style={{
-        background: 'linear-gradient(160deg, #0a0f23 0%, #060a1a 100%)',
-      }}
-    >
+        background: 'linear-gradient(160deg, #0a0f23 0%, #060a1a 100%)'
+      }}>
       {opening && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-[24px]">
           <div className="w-6 h-6 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
@@ -210,8 +237,7 @@ const PokemonCard: React.FC<IProps> = ({
             onClick={e => e.stopPropagation()}
             aria-label={`Ver ficha completa de ${data.name}`}
             className="p-1.5 rounded-lg border border-white/5 bg-white/5 text-white/30 hover:text-secondary hover:bg-secondary/10 hover:border-secondary/30 transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary"
-            title="Ver ficha completa"
-          >
+            title="Ver ficha completa">
             <ExternalLink className="w-3 h-3" aria-hidden="true" />
           </Link>
 
@@ -233,8 +259,7 @@ const PokemonCard: React.FC<IProps> = ({
                 ? 'bg-secondary text-slate-950 border-secondary shadow-glow-cyan/40 scale-105'
                 : 'bg-white/5 text-white/35 border-white/10 hover:text-white hover:bg-white/10 hover:border-white/20'
             }`}
-            title={isComparing ? 'Remover do combate' : 'Adicionar ao combate'}
-          >
+            title={isComparing ? 'Remover do combate' : 'Adicionar ao combate'}>
             <Swords className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
@@ -243,7 +268,9 @@ const PokemonCard: React.FC<IProps> = ({
       {/* Pokémon image */}
       <div className="relative w-28 h-28 sm:w-36 sm:h-36 mx-auto z-10 flex items-center justify-center mt-2 mb-1 transition-transform duration-500 group-hover:scale-110 group-hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">
         {/* Círculo de glow atrás do sprite */}
-        <div className={`absolute w-24 h-24 sm:w-32 sm:h-32 rounded-full ${style.bg} opacity-[0.07] group-hover:opacity-15 blur-md transition-all duration-500`} />
+        <div
+          className={`absolute w-24 h-24 sm:w-32 sm:h-32 rounded-full ${style.bg} opacity-[0.07] group-hover:opacity-15 blur-md transition-all duration-500`}
+        />
         <Image
           src={data.image}
           alt={data.name}
@@ -288,11 +315,16 @@ const PokemonCard: React.FC<IProps> = ({
         <div className="flex flex-col gap-1.5">
           {topStats.map((stat: any) => {
             const key = stat.name.toLowerCase()
-            const cfg = statConfig[key] || { label: stat.name, color: 'text-slate-300', bar: 'from-slate-500 to-slate-400' }
+            const cfg = statConfig[key] || {
+              label: stat.name,
+              color: 'text-slate-300',
+              bar: 'from-slate-500 to-slate-400'
+            }
             const pct = Math.min(Math.round((stat.base_stat / 255) * 100), 100)
             return (
               <div key={stat.name} className="flex items-center gap-2">
-                <span className={`text-[8px] font-black font-mono w-8 shrink-0 ${cfg.color}`}>
+                <span
+                  className={`text-[8px] font-black font-mono w-8 shrink-0 ${cfg.color}`}>
                   {cfg.label}
                 </span>
                 <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden">
@@ -314,7 +346,8 @@ const PokemonCard: React.FC<IProps> = ({
           <span className="text-[8px] font-black font-mono text-slate-400 uppercase tracking-wider">
             TOTAL
           </span>
-          <span className={`text-[9px] font-black font-mono ${style.text || 'text-secondary'} ${style.bgAlpha} px-1.5 py-0.5 rounded border ${style.border}`}>
+          <span
+            className={`text-[9px] font-black font-mono ${style.text || 'text-secondary'} ${style.bgAlpha} px-1.5 py-0.5 rounded border ${style.border}`}>
             {totalStats}
           </span>
         </div>
